@@ -5,8 +5,6 @@ from sqlalchemy.pool import StaticPool
 import logging
 from app.core.config import settings
 
-DATABASE_URL = "postgresql://postgres:123456@localhost:5432/empowerverse"
-
 logger = logging.getLogger(__name__)
 
 # Create engine with proper configuration

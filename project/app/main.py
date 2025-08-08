@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 from app.database.database import engine, get_db, init_db
 from app.database import models
-from app.routers import recommendations, data_collection
+from app.routers import recommendations, data_collection, demo
 from app.core.config import settings
 from app.services.recommendation_engine import RecommendationEngine
 from app.services.data_collector import DataCollector
@@ -67,6 +67,7 @@ app.add_middleware(
 # Include routers
 app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendations"])
 app.include_router(data_collection.router, prefix="/api/v1", tags=["data-collection"])
+app.include_router(demo.router, prefix="/api/v1/demo", tags=["demo"])
 
 @app.get("/")
 async def root():
