@@ -37,13 +37,13 @@ Your EmpowerVerse project now has a **fully functional PostgreSQL database** wit
 ### 1. **Start the Server:**
 ```bash
 cd c:\Users\HP\Downloads\empowerverse\project
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### 2. **Access the API:**
-- **Interactive Documentation:** http://localhost:8000/docs
-- **ReDoc Documentation:** http://localhost:8000/redoc
-- **Health Check:** http://localhost:8000/health
+- **Interactive Documentation:** http://127.0.0.1:8000/docs
+- **ReDoc Documentation:** http://127.0.0.1:8000/redoc
+- **Health Check:** http://127.0.0.1:8000/health
 
 ## 🎬 **Demo Endpoints for Presentation**
 
