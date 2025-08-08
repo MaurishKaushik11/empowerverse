@@ -9,6 +9,8 @@ venv/
 env/
 ENV/
 + venv*/  # In case your venv folder has custom name like `venv11` or similar
+project/.venv/
+
 
 # === Environment Variables ===
 .env
