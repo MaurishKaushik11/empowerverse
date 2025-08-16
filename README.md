@@ -179,11 +179,11 @@
  FLIC_TOKEN=your_flic_token_here
  
 -# Database Configuration
--DATABASE_URL=postgresql://user:password@localhost/video_recommendation_db
+-DATABASE_URL=postgresql://user:123456@localhost/video_recommendation_db
 -
 -# Redis Configuration
 +# Database
-+DATABASE_URL=postgresql://user:password@localhost/empowerverse_db
++DATABASE_URL=postgresql://user:123456@localhost/empowerverse_db
 +
 +# Redis Cache
  REDIS_URL=redis://localhost:6379

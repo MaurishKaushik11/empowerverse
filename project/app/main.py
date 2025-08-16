@@ -1,98 +1,63 @@
-from fastapi import FastAPI, HTTPException, Depends, Query, Header
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from typing import Optional, List
-import uvicorn
-import logging
-from contextlib import asynccontextmanager
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.database.database import engine, get_db, init_db
-from app.database import models
-from app.routers import recommendations, data_collection, demo
-from app.core.config import settings
-from app.services.recommendation_engine import RecommendationEngine
-from app.services.data_collector import DataCollector
-
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-# Initialize database
-try:
-    init_db()
-    logger.info("Database initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize database: {e}")
-    # Continue anyway for development
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    print("Starting up Video Recommendation Engine...")
-    
-    # Initialize recommendation engine
-    recommendation_engine = RecommendationEngine()
-    app.state.recommendation_engine = recommendation_engine
-    
-    # Initialize data collector
-    data_collector = DataCollector()
-    app.state.data_collector = data_collector
-    
-    yield
-    
-    # Shutdown
-    print("Shutting down...")
-
-app = FastAPI(
-    title="Video Recommendation Engine",
-    description="A sophisticated recommendation system for personalized video content",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import Response
+from typing import Optional
+from app.recommend import (
+    recommend_for_user,
+    recommend_for_user_by_category,
+    recommend_for_username,
+    recommend_for_username_by_category,
 )
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Include routers
-app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendations"])
-app.include_router(data_collection.router, prefix="/api/v1", tags=["data-collection"])
-app.include_router(demo.router, prefix="/api/v1/demo", tags=["demo"])
+app = FastAPI(title="Video Recommendation Engine")
 
 @app.get("/")
-async def root():
-    return {
-        "message": "Video Recommendation Engine API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "status": "active"
-    }
+def root():
+    return {"status": "ok"}
 
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "service": "video-recommendation-engine"}
+@app.get("/favicon.ico")
+def favicon():
+    return Response(status_code=204)  # No Content - eliminates the 404
 
-if __name__ == "__main__":
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+# Main required endpoint
+@app.get("/feed")
+def feed(
+    username: str = Query(..., description="Username"),
+    top_k: int = Query(5, ge=1, le=100),
+    project_code: Optional[str] = Query(None, description="Project code filter"),
+    category: Optional[str] = Query(None, description="Category filter"),
+    tag: Optional[str] = Query(None, description="Tag filter")
+):
+    try:
+        if project_code or category or tag:
+            results = recommend_for_username_by_category(
+                username=username,
+                top_k=top_k,
+                category=category,
+                tag=tag,
+                project_code=project_code
+            )
+        else:
+            results = recommend_for_username(username=username, top_k=top_k)
+        
+        return {
+            "username": username,
+            "top_k": top_k,
+            "project_code": project_code,
+            "category": category,
+            "tag": tag,
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-    # try:
-#     init_db()
-#     logger.info("Database initialized successfully")
-# except Exception as e:
-#     logger.error(f"Failed to initialize database: {e}")
+# Keep existing endpoint for backward compatibility
+@app.get("/recommend/{user_id}")
+def recommend(user_id: int, top_k: int = 5):
+    try:
+        recs = recommend_for_user(user_id=user_id, top_k=top_k)
+        return {"user_id": user_id, "top_k": top_k, "results": recs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
